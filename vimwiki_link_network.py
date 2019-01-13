@@ -1,4 +1,5 @@
-# Try with '/home/joshbeard/code/labnotes/vimwiki/index.wiki'
+# TODO:
+# [ ] when plotting, set figsize to something more appropriate for saving
 
 import argparse
 import os
@@ -124,7 +125,7 @@ class VimwikiGraph(nx.DiGraph):
         self.simple_edges = list(chain(*[self.expand_edges(edge) for edge in self.simple_edges]))
         self.expanded = True
 
-    def plot_nx_graph(self, draw_type=None):
+    def plot_nx_graph(self, draw_type=None, save=False):
         plt.subplot(111)
         if draw_type is None:
             nx.draw(self, with_labels=True)
@@ -134,6 +135,11 @@ class VimwikiGraph(nx.DiGraph):
             nx.draw_circular(self, with_labels=True)
         elif draw_type.lower() == 'spectral':
             nx.draw_spectral(self, with_labels=True)
+        elif draw_type.lower() == 'spring':
+            nx.draw_spring(self, with_labels=True)
+
+        if save:
+            plt.savefig('vimwiki_network')
 
         plt.show()
 
