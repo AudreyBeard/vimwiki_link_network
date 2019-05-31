@@ -1,0 +1,12 @@
+= TOP =
+This is a test wiki
+
+Here is some basic text
+
+[[This is a link]]
+
+[[This is another link]]
+
+following is a link to somewhere else in the file: [[#TOP]]
+
+[[here's an aliased link|alias]]
