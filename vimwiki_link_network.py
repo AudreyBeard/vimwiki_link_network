@@ -4,15 +4,25 @@
 import argparse
 import os
 import re
+from itertools import chain
+
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
-from itertools import chain
 
 parser = argparse.ArgumentParser(description="Creates a graph of Vimwiki Links")
-parser.add_argument('entry_point', type=str, nargs=1, metavar='filename', help='file name of entry point for graph traversal')
+parser.add_argument('entry_point',
+                    type=str,
+                    nargs=1,
+                    metavar='EntryPoint',
+                    help='file name of entry point for graph traversal')
+parser.add_argument('graph_type',
+                    type=str,
+                    nargs='?',
+                    metavar='NetworkXGraphType',
+                    help='Type of graph to display')
 
-fpath = '/home/joshbeard/code/labnotes/vimwiki/index.wiki'
+fpath = '$HOME/code/labnotes/vimwiki/index.wiki'
 
 
 class VimwikiGraph(nx.DiGraph):
@@ -125,7 +135,8 @@ class VimwikiGraph(nx.DiGraph):
         self.simple_edges = list(chain(*[self.expand_edges(edge) for edge in self.simple_edges]))
         self.expanded = True
 
-    def plot_nx_graph(self, draw_type=None, save=False):
+    def plot_nx_graph(self, draw_type=None, save=False, figsize=(18, 122)):
+        plt.figure(figsize=figsize)
         plt.subplot(111)
         if draw_type is None:
             nx.draw(self, with_labels=True)
@@ -155,13 +166,13 @@ def get_wiki_links(fname):
         text = fid.read()
 
     # Find all links
-    links = re.findall('\[\[.*?\]\]', text)
+    links = re.findall('\[\[.*?\]\]', text)  # NOQA
 
     # Strip off brackets and disregard links to self
     links = [s.strip('[[').strip(']]') for s in links if not s[2] == '#']
 
     # Strip off link aliases
-    links = [re.sub('\|.*', '', s) for s in links]
+    links = [re.sub('\|.*', '', s) for s in links]  # NOQA
 
     return links
 
@@ -171,3 +182,5 @@ if __name__ == "__main__":
     ep = args.entry_point[0]
 
     graph = VimwikiGraph(ep)
+    graph.visit_all()
+    graph.plot_nx_graph(draw_type=args.graph_type, save=False)
