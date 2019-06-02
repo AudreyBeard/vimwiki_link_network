@@ -15,12 +15,19 @@ parser.add_argument('entry_point',
                     type=str,
                     nargs=1,
                     metavar='EntryPoint',
+                    action='store_constant',
                     help='file name of entry point for graph traversal')
 parser.add_argument('graph_type',
                     type=str,
-                    nargs='?',
+                    action='store_constant',
                     metavar='NetworkXGraphType',
                     help='Type of graph to display')
+parser.add_argument('--show',
+                    action='store_true',
+                    help='Show graph?')
+parser.add_argument('--save',
+                    action='store_true',
+                    help='save graph?')
 
 fpath = '$HOME/code/labnotes/vimwiki/index.wiki'
 
@@ -67,7 +74,7 @@ class VimwikiGraph(nx.DiGraph):
         self._visited.add(cur_node)
 
         # Get links at this cur_node:
-        links = get_wiki_links(cur_node)
+        links = VimwikiGraph.get_wiki_links(cur_node)
         if links is not None:
             # Get parent directory of current cur_node and get full link paths
             cur_dir = os.path.split(cur_node)[0]
@@ -135,7 +142,7 @@ class VimwikiGraph(nx.DiGraph):
         self.simple_edges = list(chain(*[self.expand_edges(edge) for edge in self.simple_edges]))
         self.expanded = True
 
-    def plot_nx_graph(self, draw_type=None, save=False, figsize=(18, 122)):
+    def plot_nx_graph(self, draw_type=None, save=False, figsize=(24, 16), show=False):
         plt.figure(figsize=figsize)
         plt.subplot(111)
         if draw_type is None:
@@ -152,29 +159,30 @@ class VimwikiGraph(nx.DiGraph):
         if save:
             plt.savefig('vimwiki_network')
 
-        plt.show()
+        if show:
+            plt.show()
 
+    @staticmethod
+    def get_wiki_links(fname):
+        if not fname.endswith('.wiki'):
+            fname = fname + '.wiki'
 
-def get_wiki_links(fname):
-    if not fname.endswith('.wiki'):
-        fname = fname + '.wiki'
+        if not os.path.exists(fname):
+            return None
 
-    if not os.path.exists(fname):
-        return None
+        with open(fname) as fid:
+            text = fid.read()
 
-    with open(fname) as fid:
-        text = fid.read()
+        # Find all links
+        links = re.findall('\[\[.*?\]\]', text)  # NOQA
 
-    # Find all links
-    links = re.findall('\[\[.*?\]\]', text)  # NOQA
+        # Strip off brackets and disregard links to self
+        links = [s.strip('[[').strip(']]') for s in links if not s[2] == '#']
 
-    # Strip off brackets and disregard links to self
-    links = [s.strip('[[').strip(']]') for s in links if not s[2] == '#']
+        # Strip off link aliases
+        links = [re.sub('\|.*', '', s) for s in links]  # NOQA
 
-    # Strip off link aliases
-    links = [re.sub('\|.*', '', s) for s in links]  # NOQA
-
-    return links
+        return links
 
 
 if __name__ == "__main__":
@@ -182,5 +190,7 @@ if __name__ == "__main__":
     ep = args.entry_point[0]
 
     graph = VimwikiGraph(ep)
-    graph.visit_all()
-    graph.plot_nx_graph(draw_type=args.graph_type, save=False)
+    import ipdb
+    with ipdb.launch_ipdb_on_exception():
+        graph.visit_all()
+        graph.plot_nx_graph(draw_type=args.graph_type, save=args.save, show=args.show)
